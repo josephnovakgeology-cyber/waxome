@@ -6,7 +6,20 @@ We really appreciate you checking out our work. This document is meant to help y
 If you are looking for information on how to update Waxome with new data or on how to adapt it to a different environment, please check out instructions.md in the "how_to_update_model" folder. 
 
 ### Setting up the python environment
+Waxome has several dependencies that you will need to install into a python environment for you to get up and running. For convenience, I made a .yml file that you can use to do that. For the guide, I assume that you are using Spyder and conda, since that is the only way I know how to do this. 
 
+To get started, open Anaconda prompt (PC) or the terminal (Mac). You should see something like this:
+<img width="200" height="35" alt="image" src="https://github.com/user-attachments/assets/8be845bf-d572-4bda-994a-1dfbf28cad5e" />
+
+You need to use the "cd" terminal command to navigate to where the .yml file is on your computer. For me, that command looks like this:
+cd C:\Users\josep\OneDrive\Documents\papers\alkane_biomization\code\github_version
+
+Once you've done that, type in this command to set up the environment:
+conda env create -f waxome_env.yml
+
+It will look like you are hacking into the mainframe for a minute or two. 
+
+Once that is done, your environment is set up and ready to roll. 
 ## Analyzing sedimentary n-alkane distributions with Waxome
 ### Disclaimer
 The version Waxome presented here is intended for application from Northern Hemisphere boreal environments (i.e., the Arctic and sub-Arctic). This model is not appropriate to use elsewhere because the vegetation data that parameterizes the model and the biomes it describes are particular to the Arctic and sub-Arctic. 
@@ -21,11 +34,13 @@ This file is intended to be the data for this demo in addition to the template f
 headers are fC23, fC25, etc. - these are the fractional abundances of the C23-C31, odd n-alkanes. These values must sum to 1. Do not include other n-alkane chain lengths, it will mess up the model because the modern plant data only include C23-C31, odd.
 
 ### Running the script
-To run Waxome, open the run_waxome.py file (no kidding). run_waxome.py needs to be in the same folder as waxome.py for the code to work. 
+To run Waxome, open the run_waxome.py file (no kidding). run_waxome.py needs to be in the same folder as waxome.py for the code to work.
 
 The code should look like this:
 
 <img width="1031" height="747" alt="image" src="https://github.com/user-attachments/assets/c3a9abb2-4ac1-422a-b1c7-b01ede020e65" />
+
+**If you are not super familiar with python, it is important to understand that your python interpreter must be directed towards the waxome_env python environment we made for the code to work. In Spyder (which is what I know how to use), you can change that by clicking "tools" on the top ribbon, then "preferences", then "python interpreter." Then change the python interpreter to be the waxome_env environment and restart the kernel. You also need to set Spyder's working directory to be the folder where the waxome.py, run_waxome.py, .xlsx file containing species_data, and .xlsx file containing sediment_data are co-located. You will want to change the python interpreter setting when you are done using Waxome so that you do not forget that it is set as the default active environment.**
 
 To run your data or the demo, you need to update the file paths for species_data (line 29 of the code) and sediment_data (L30). I purposely included two different versions of how that can be done as examples. You can either call the entire directory path (formatted for my PC on L29), or you can search within your current folder (formatted as in L30). 
 
