@@ -1,5 +1,5 @@
 # waxome
-A series of python scripts for running the Waxome n-alkane forward proxy model. 
+A series of python scripts for running the Waxome n-alkane forward proxy model. The user guide is in the code folder.
 
 This version of the model is parameterized to reconstruct vegetation change through time from n-alkanes in boreal Northern Hemisphere environments. 
 
