@@ -32,3 +32,9 @@ The other big task will be updating the load_waxome_parameterization function in
 
 The tricky part about this step is that you need to estimate the PFT abundance bounds in the biome_bounds matrix. This will require an extensive literature review.
 
+Once all of this is done, run the code in the following sequence:
+    1). calculate_species_means.py
+    2). assign_species_to_biomes.py
+    3). run_waxome.py
+
+You will need to test this new parameterization of the model against a surface sediment database and, preferably, a downcore n-alkane record paired to a pollen dataset to validate the model.
