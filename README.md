@@ -10,6 +10,7 @@ The manuscript describing Waxome is currently in review. Use this code at your o
 Wax on, wax off. 
 
 References:
+
 Lee, D. D., & Seung, H. S. (1999). Learning the parts of objects by non-negative matrix factorization. Nature, 401(6755), 788–791. https://doi.org/10.1038/44565
 
 Polissar, P. J., Karp, A. T., & D’Andrea, W. J. (2025). Mixed messages: Unmixing sedimentary molecular distributions reveals source contributions and isotopic values. Geochimica et Cosmochimica Acta, 396, 122–134. https://doi.org/10.1016/j.gca.2025.03.001
