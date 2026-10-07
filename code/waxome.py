@@ -376,7 +376,7 @@ def waxome_analysis(combined_simulation_results, n_NMF_endmembers, sediment_file
 
     print("\n--- Fractional NMF Endmember Weights per Sample ---")
     print(df_sample_weights.head(15).round(3))
-    df_sample_weights.to_excel('baikal_NMF_weights_downcore.xlsx', index=False)
+    df_sample_weights.to_excel(f'{study_site}_NMF_weights_downcore.xlsx', index=False)
     
     # Scree plot to show the variance explained at different numbers of NMF endmembers
     print("Generating NMF Scree Plot...")
@@ -424,10 +424,10 @@ def waxome_analysis(combined_simulation_results, n_NMF_endmembers, sediment_file
     ax2.tick_params(axis='y', labelcolor=color_var)
     ax2.set_ylim(min(variance_explained) - 5, 102)
 
-    plt.title('Sediment NMF Scree Plot: Model Fit vs. Number of Endmembers', fontweight='bold', fontsize=13)
+    plt.title(f'{study_site} NMF Scree Plot: Model Fit vs. Number of Endmembers', fontweight='bold', fontsize=13)
     fig.tight_layout()
 
-    plt.savefig('nmf_scree_plot.pdf', format='pdf', bbox_inches='tight', dpi=300)
+    plt.savefig(f'{study_site}_nmf_scree_plot.pdf', format='pdf', bbox_inches='tight', dpi=300)
     plt.show()
     
     #projecting NMF endmembers onto the simulation PCA space
@@ -494,7 +494,7 @@ def waxome_analysis(combined_simulation_results, n_NMF_endmembers, sediment_file
     plt.ylim(-4, 4)  
     plt.legend(title='Biome Endmembers', bbox_to_anchor=(1.05, 1), loc='upper left', frameon=True)
     plt.tight_layout()
-    plt.savefig('baikal_250ka_pca_biplot.pdf', format='pdf', bbox_inches='tight')
+    plt.savefig(f'{study_site}_pca_biplot.pdf', format='pdf', bbox_inches='tight')
     plt.show()
     
     
@@ -549,7 +549,7 @@ def waxome_analysis(combined_simulation_results, n_NMF_endmembers, sediment_file
     print("\n--- Angular distances of sample endmember from simulated biomes ---")
     print(df_thresholds.round(3).to_string(index=False))
 
-    df_thresholds.to_excel('endmember_angular_thresholds.xlsx', index=False)
+    df_thresholds.to_excel(f'{study_site}_endmember_angular_distance_metrics.xlsx', index=False)
     print("\nSaved angular threshold metrics to 'endmember_angular_distances.xlsx'")
     
     print("Generating bar plots of NMF endmember distributions with attribution...")
@@ -605,7 +605,7 @@ def waxome_analysis(combined_simulation_results, n_NMF_endmembers, sediment_file
     axes[-1].set_xlabel('$n$-Alkane Chain Length', fontsize=14)
 
     plt.tight_layout() 
-    plt.savefig('nmf_endmember_barplot.pdf', format='pdf', bbox_inches='tight')
+    plt.savefig(f'{study_site}_nmf_endmember_barplot.pdf', format='pdf', bbox_inches='tight')
     plt.show()
     
     return print('Waxome analysis complete. \n Check your working directory for saved plots and spreadsheets.\n Thanks for using Waxome :)')

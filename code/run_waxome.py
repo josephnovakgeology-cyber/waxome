@@ -6,7 +6,7 @@ Created on Tue Oct  6 17:23:54 2026
 
 This is the execution script for the Waxome Model. The only arguments that need to be updated to run this script
 for data from a different study site are the species_data file path and the sediment_data file path. I also 
-recommend updating the study site name argument to reflect where you are working :p
+recommend updating the study site name argument so that the output files reflect where you are working :p
 
 This script requires the waxome.py script to be in the same folder in order to work. Please see the user guide on 
 Github if you are having any issues figuring out how to use this. I am also happy to help if you send me an email.
