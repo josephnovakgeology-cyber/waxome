@@ -22,7 +22,7 @@ It will look like you are hacking into the mainframe for a minute or two.
 Once that is done, your environment is set up and ready to roll. 
 ## Analyzing sedimentary n-alkane distributions with Waxome
 ### Disclaimer
-The version Waxome presented here is intended for application from Northern Hemisphere boreal environments (i.e., the Arctic and sub-Arctic). This model is not appropriate to use elsewhere because the vegetation data that parameterizes the model and the biomes it describes are particular to the Arctic and sub-Arctic. 
+The version of Waxome presented here is intended for application from Northern Hemisphere boreal environments (i.e., the Arctic and sub-Arctic). This model is not appropriate to use elsewhere because the vegetation data that parameterizes the model and the biomes it describes are particular to the Arctic and sub-Arctic. 
 
 Waxome also assumes that you are analyzing thermally immature n-alkanes. Check out the CPI of your samples to make sure it is a reasonable value for this purpose. 
 
