@@ -47,7 +47,7 @@ The code should look like this:
 To run your data or the demo, you need to update the file paths for species_data (line 29 of the code) and sediment_data (L30). I purposely included two different versions of how that can be done as examples. You can either call the entire directory path (formatted for my PC on L29), or you can search within your current folder (formatted as in L30). 
 
 The other variables you should update are the study_site on L46, unless you are running the demo dataset from Lake Baikal, and the number of NMF endmembers.
-The number of endmember can be hard to know before you start exploring your data, so you will likely want to run Waxome more than once (see the Scree plot below).
+The appropriate number of NMF endmembers can be hard to know before you start exploring your data, so you will likely want to run Waxome more than once (see the Scree plot below).
 
 After that, run the script, which in Spyder is done by pressing the little green arrow on the top ribbon here:
 
