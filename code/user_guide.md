@@ -33,14 +33,16 @@ Download the scripts and supporting .xlsx files from Github. In the same folder 
 This file is intended to be the data for this demo in addition to the template for how you will need to format your n-alkane data to use the model. The important
 headers are fC23, fC25, etc. - these are the fractional abundances of the C23-C31, odd n-alkanes. These values must sum to 1. Do not include other n-alkane chain lengths, it will mess up the model because the modern plant data only include C23-C31, odd.
 
+If you want to add more chain lengths, you will need to re-parameterize the model. Instructions and supporting code for how to do that are in "how_to_update_model" folder.
+
 ### Running the script
-To run Waxome, open the run_waxome.py file (no kidding). run_waxome.py needs to be in the same folder as waxome.py for the code to work.
+To run Waxome, open the run_waxome.py file (no kidding). run_waxome.py needs to be in the same folder as waxome.py for the code to work. Personally, I prefer to also keep the species_summary_stats_with_biomes.xlsx and your baikal_250ka_alkanes.xlsx files in the same folder also.
 
 The code should look like this:
 
 <img width="1031" height="747" alt="image" src="https://github.com/user-attachments/assets/c3a9abb2-4ac1-422a-b1c7-b01ede020e65" />
 
-**If you are not super familiar with python, it is important to understand that your python interpreter must be directed towards the waxome_env python environment we made for the code to work. In Spyder (which is what I know how to use), you can change that by clicking "tools" on the top ribbon, then "preferences", then "python interpreter." Then change the python interpreter to be the waxome_env environment and restart the kernel. You also need to set Spyder's working directory to be the folder where the waxome.py, run_waxome.py, .xlsx file containing species_data, and .xlsx file containing sediment_data are co-located. You will want to change the python interpreter setting when you are done using Waxome so that you do not forget that it is set as the default active environment.**
+**If you are not super familiar with python, it is important to understand that your python interpreter must be directed towards the waxome_env python environment we made for the code to work. In Spyder (which is what I know how to use), you can change that by clicking "tools" on the top ribbon, then "preferences", then "python interpreter." Then change the python interpreter to be the waxome_env environment and restart the kernel. You also need to set Spyder's working directory to be the folder where the waxome.py and run_waxome.py (and probably the .xlsx files containing species_data sediment_data unless you want to use a long file path name) are co-located. You will want to change the python interpreter setting when you are done using Waxome so that you do not forget that it is set as the default active environment the next time you use spyder.**
 
 To run your data or the demo, you need to update the file paths for species_data (line 29 of the code) and sediment_data (L30). I purposely included two different versions of how that can be done as examples. You can either call the entire directory path (formatted for my PC on L29), or you can search within your current folder (formatted as in L30). 
 
