@@ -75,5 +75,11 @@ The last plot to help you think about your endmember identities is the barplot p
 
 <img width="853" height="619" alt="image" src="https://github.com/user-attachments/assets/84a3fd82-26ac-47b5-be58-10502f103121" />
 
-You can compare the shape of these barplots to those of the biome centroids in the Waxome manuscript. The assigned identities should look qualitatively similar to what you see for the centroid value of that biome. 
+You can compare the shape of these barplots to those of the biome centroids in the Waxome manuscript. The simulated distribution of the most similar biome identified by the angular distance metric should look qualitatively similar to the n-alkane distribution of your NMF endmember. 
 
+Lastly, Waxome saves .xlsx files into the working directory that contain the angular distance scores of each biome to each endmember and the basis weights of the NMF endmembers for each sample. How to interpret those data is discussed below.
+
+### Interpreting the NMF Weights of your samples
+The really useful thing about NMF is that is quantifies the basis weights of the different endmembers that compose your samples. If your samples correspond to an age or depth sequence, this means that you can see how the n-alkane contributions of different endmembers to your samples changed through time. For example, at Lake Baikal, the n-alkanes appear to essentially be a two-endmember mixing system, with a graminoid endmember (EM1) and a woody endmember (EM2). Their variation through time basically reflects the average chain length distribution in the Lake Baikal samples, but with NMF we can more quantitatively understand what those variations mean. Check out the figure below to see what I mean.
+
+<img width="957" height="630" alt="image" src="https://github.com/user-attachments/assets/ffb0c192-f555-402b-844b-b14f39d1dc05" />
