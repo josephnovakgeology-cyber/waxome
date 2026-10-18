@@ -8,7 +8,9 @@ If you are looking for information on how to update Waxome with new data or on h
 ### Setting up the python environment
 Waxome has several dependencies that you will need to install into a python environment for you to get up and running. For convenience, I made a .yml file that you can use to do that. For the guide, I assume that you are using Spyder and conda, since that is the only way I know how to do this. 
 
-To get started, open Anaconda prompt (PC) or the terminal (Mac). You should see something like this:
+To get started, download the Waxome code from Github and extract the files within to a folder on your computer.
+
+Next, open Anaconda prompt (PC) or the terminal (Mac). You should see something like this:
 <img width="200" height="35" alt="image" src="https://github.com/user-attachments/assets/8be845bf-d572-4bda-994a-1dfbf28cad5e" />
 
 You need to use the "cd" terminal command to navigate to where the .yml file is on your computer. For me, that command looks like this:
