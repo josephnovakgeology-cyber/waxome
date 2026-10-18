@@ -71,7 +71,7 @@ This plot helps give a sense of the appropriate number of NMF endmembers for you
 
 <img width="1413" height="993" alt="image" src="https://github.com/user-attachments/assets/4ab0ef1d-4233-43d6-a918-e08c715753e3" />
 
-The next plot is the PCA plot, which shows a projection of the sediment samples onto the PCA space of the Waxome simulations. There are a couple of things to look for here. Firstly, do your sediment samples (white stars) fall within the cloud of colored points (the Waxome simulations?). Secondly, do the endmembers (white Xs) plot in a region that makes sense for the identified most likely endmember based on the printout in the console? 
+The next plot is the PCA biplot, which shows a projection of the sediment samples onto the PCA space of the Waxome simulations. There are a couple of things to look for here. Firstly, do your sediment samples (white stars) fall within the cloud of colored points (the Waxome simulations?). Secondly, do the endmembers (white Xs) plot in a region that makes sense for the identified most likely endmember based on the printout in the console? 
 
 The last plot to help you think about your endmember identities is the barplot pasted below:
 
