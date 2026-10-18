@@ -31,7 +31,7 @@ Waxome also assumes that you are analyzing thermally immature n-alkanes. Check o
 Make sure you are using the model appropriately. 
 
 ### Preparing your data
-Download the scripts and supporting .xlsx files from Github. In the same folder where you found the user guide, there is a file called "baikal_250ka_alkanes.xlsx"
+In the same folder as the user guide, there is a file called "baikal_250ka_alkanes.xlsx"
 This file is intended to be the data for this demo in addition to the template for how you will need to format your n-alkane data to use the model. The important
 headers are fC23, fC25, etc. - these are the fractional abundances of the C23-C31, odd n-alkanes. These values must sum to 1. Do not include other n-alkane chain lengths, it will mess up the model because the modern plant data only include C23-C31, odd.
 
