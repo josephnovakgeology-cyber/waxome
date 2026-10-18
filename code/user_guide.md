@@ -26,9 +26,9 @@ Once that is done, your environment is set up and ready to roll.
 ### Disclaimer
 The version of Waxome presented here is intended for application from Northern Hemisphere boreal environments (i.e., the Arctic and sub-Arctic). This model is not appropriate to use elsewhere because the vegetation data that parameterizes the model and the biomes it describes are particular to the Arctic and sub-Arctic. 
 
-Waxome also assumes that you are analyzing thermally immature n-alkanes. Check out the CPI of your samples to make sure it is a reasonable value for this purpose. 
+Waxome also assumes that you are analyzing thermally immature n-alkanes. Check out the CPI of your samples to make sure that they are reasonable to use for this purpose.
 
-Make sure you are using the tool appropriately. 
+Make sure you are using the model appropriately. 
 
 ### Preparing your data
 Download the scripts and supporting .xlsx files from Github. In the same folder where you found the user guide, there is a file called "baikal_250ka_alkanes.xlsx"
