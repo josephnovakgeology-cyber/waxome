@@ -22,7 +22,7 @@ to help you troubleshoot the code.
 import pandas as pd
 
 # Load the dataset
-file_path = r"C:\Users\josep\OneDrive\Documents\papers\alkane_biomization\code\species_summary_stats.xlsx"
+file_path = r"C:\Users\josep\OneDrive\Documents\papers\alkane_biomization\code\github_version\species_summary_stats.xlsx"
 df = pd.read_excel(file_path)
 
 # Define the biome lists 
@@ -188,7 +188,7 @@ df['Tall Shrub Tundra'] = df['Taxa'].apply(lambda x: check_biome(x, tall_shrub_t
 df['Graminoid Dwarf Shrub Tundra'] = df['Taxa'].apply(lambda x: check_biome(x, graminoid_dwarf_shrub_tundra_taxa))
 df['Aquatic'] = df['Taxa'].apply(lambda x: check_biome(x, aquatic_taxa))
 
-# Preview the results
+# Check the results
 print(df[['Taxa', 'Cold Steppe', 'Forest-Steppe', 'Boreal Forest', "Tall Shrub Tundra", 'Graminoid Dwarf Shrub Tundra', 'Aquatic']].head())
 
 # Export to a new Excel file. This is the file that the proxy model code uses.
