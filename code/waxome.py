@@ -45,6 +45,8 @@ you are interested in the proxy model and I will do my best to get you up and ru
 ##### Change Log #####
 10/6/2026 Working scripts were reformatted into this publication-ready format and tested.
 
+11/11/2026 Taxon simulation method finalized to use Dirichlet distribution, code updated to implement the change.
+
 """
 import pandas as pd
 import numpy as np
@@ -81,20 +83,70 @@ def load_waxome_parameterizations(species_data_file_path, Drichilet_shape_parame
 
     """
     taxa = pd.read_excel(species_data_file_path)
-    # grab the concentration and relative abundance columns
-    alkane_chains = [c.split('_')[1] for c in taxa.columns if c.startswith('conc_') and c.endswith('_mean')]
+    
+    # grab the relative abundance columns to determine the chains
+    alkane_chains = [c.split('_')[0][1:] for c in taxa.columns if c.startswith('fC') and c.endswith('_mean')]
 
-    # Fill NaN means with 0, and as a standard deviation of +/- 10% for taxa with only one measurement
-    for chain in alkane_chains:
-        mean_col = f'conc_{chain}_mean'
-        std_col = f'conc_{chain}_std'
+    # Fill NaN means with 0
+    taxa['total_conc_mean'] = taxa['total_conc_mean'].fillna(0.0)
+    taxa['total_conc_std'] = taxa['total_conc_std'].fillna(0.0)
+    
+    # Identify taxa with multiple observations to calculate a typical coefficient of variation
+    multi_conc_obs_mask = (taxa['total_conc_mean'] > 0) & (taxa['total_conc_std'] > 0)
+    
+    if multi_conc_obs_mask.any():
+        # Calculate the median cv (stdev / mu) from well-measured plants
+        dataset_cvs = taxa.loc[multi_conc_obs_mask, 'total_conc_std'] / taxa.loc[multi_conc_obs_mask, 'total_conc_mean']
+        median_cv = dataset_cvs.median()
+    
         
-        if mean_col in taxa.columns and std_col in taxa.columns:
-            taxa[mean_col] = taxa[mean_col].fillna(0.0)
-            taxa[std_col] = taxa[std_col].fillna(taxa[mean_col] * 0.90)
-            taxa[std_col] = taxa[std_col].fillna(0.0)
+    # Identify taxa that have a measured concentration but no standard deviation
+    single_conc_obs_mask = (taxa['total_conc_mean'] > 0) & (taxa['total_conc_std'] == 0.0)
+    
+    # Apply the population's median CV to estimate their standard deviation dynamically
+    taxa.loc[single_conc_obs_mask, 'total_conc_std'] = taxa.loc[single_conc_obs_mask, 'total_conc_mean'] * median_cv
+    
+    for chain in alkane_chains:
+        taxa[f'f{chain}_mean'] = taxa[f'f{chain}_mean'].fillna(0.0)
+        taxa[f'f{chain}_std'] = taxa[f'f{chain}_std'].fillna(0.0)
 
-    # Biome-specific PFT abundances and converstion to Drichilet alpha values
+    # Calculate Dirichlet alpha values for each taxon using the method of moments
+    alpha_0_estimates = []
+    for chain in alkane_chains:
+        mu = taxa[f'f{chain}_mean']
+        var = taxa[f'f{chain}_std'] ** 2
+        
+        # Avoid division by zero
+        var = var.replace(0, 1e-9)
+        
+        # Calculate alpha_0 for this chain
+        a0 = (mu * (1 - mu) / var) - 1
+        
+        # Clip lower bound to 1.0 to prevent underflow in Dirichlet sampling
+        a0 = a0.clip(lower=1.0, upper=1000) 
+        alpha_0_estimates.append(a0)
+
+    # Get median precision parameter across all chains for each taxon
+    taxa['taxon_alpha_0'] = pd.concat(alpha_0_estimates, axis=1).median(axis=1)
+
+    # Identify taxa with multiple observations (their fractional standard deviations will sum to > 0)
+    std_columns = [f'f{chain}_std' for chain in alkane_chains]
+    multi_obs_mask = taxa[std_columns].sum(axis=1) > 0
+    
+    # Calculate the median alpha_0 from only the well-measured taxa
+    if multi_obs_mask.any():
+        median_population_alpha_0 = taxa.loc[multi_obs_mask, 'taxon_alpha_0'].median()
+    
+        
+    # For single observations, use the population median as the alpha value
+    taxa.loc[~multi_obs_mask, 'taxon_alpha_0'] = median_population_alpha_0
+    
+    # Calculate final alphas for each chain: alpha_i = mu_i * alpha_0
+    # Set zero values to (0.0001) so Dirichlet draws never produce NaNs & break the function
+    for chain in alkane_chains:
+        taxa[f'alpha_{chain}'] = (taxa[f'f{chain}_mean'] * taxa['taxon_alpha_0']).clip(lower=1e-4)
+
+    # Biome-specific PFT abundances and converstion to Dirichlet alpha values
     biome_bounds = {
         'Biome': ['Cold Steppe',  "Forest-Steppe", 'Boreal Forest', 'Tall Shrub Tundra', 'Graminoid Dwarf Shrub Tundra', 'Aquatic'],
         'tree': [[0, 0], [0.15, 0.5], [0.70, 0.95], [0, 0.2],  [0, 0], [0, 0]],
@@ -110,14 +162,12 @@ def load_waxome_parameterizations(species_data_file_path, Drichilet_shape_parame
     df_midpoints = df_bounds.map(lambda x: sum(x) / 2.0)
     df_normalized = df_midpoints.div(df_midpoints.sum(axis=1), axis=0)
 
-    S = Drichilet_shape_parameter  
-    alphas = (df_normalized * S).replace(0.0, 1e-4)
+    V = Drichilet_shape_parameter  
+    alphas = (df_normalized * V).replace(0.0, 1e-4)
     return alphas, taxa, alkane_chains
 
 
-# Defining the sedimentary n-alkane forward model 
-
-def waxome(alphas, taxa, alkane_chains, max_species_per_pft=50):
+def waxome(alphas, taxa, alkane_chains, max_species_per_pft=50, taxa_draws=50):
     """
     Runs one iteration of the Monte Carlo Simulation.
     Calculates biome-specific Plant Functional Type (PFT) signatures 
@@ -135,48 +185,67 @@ def waxome(alphas, taxa, alkane_chains, max_species_per_pft=50):
         
     alkane_chains : pandas dataframe
         The n-alkane relative abundances and concentration data, with estimated uncertainties of +/- 90% for instances of one entry for a taxon.
-    
+
+    max_species_per_pft : int
+        The number of species to sample per Plant Functional Type.
+        
+    num_taxa_draws : int
+        The number of unique draws per taxa. This number should at least equal to max_species_per_pft.
+        
     Returns
     -------
     biome_final_distributions: pandas dataframe
     This is the outcome of one iteration of the Monte Carlo simulations
     
     """
-
     
     # Simulating the plants in each biome
-    cols_to_keep = ['Taxa', 'Plant Functional Type 1', 'Plant Functional Type 2']
+    cols_to_keep = ['Taxa', 'Plant Functional Type 1', 'Plant Functional Type 2', 'total_conc_mean', 'total_conc_std']
+    cols_to_keep.extend([f'alpha_{chain}' for chain in alkane_chains])
     cols_to_keep = [c for c in cols_to_keep if c in taxa.columns]
     
     # Identify biome columns in the dataset 
     biome_cols = [b for b in alphas.index if b in taxa.columns]
     cols_to_keep.extend(biome_cols)
     
-    simulated_taxa = taxa[cols_to_keep].copy()
+    # expanding the dataframe to accomodate simulated draws
+    expanded_taxa = taxa.loc[taxa.index.repeat(taxa_draws)].reset_index(drop=True)
     
-    for chain in alkane_chains:
-        mean_col = f'conc_{chain}_mean'
-        std_col = f'conc_{chain}_std'
+    # simulating n-alkane concentrations and distributions for each taxa
+    simulated_taxa = expanded_taxa[cols_to_keep].copy()
     
-        mu = taxa[mean_col].values
-        sigma = taxa[std_col].values
+    # Log-normal Monte Carlo draw of the total concentration
+    mu_conc = expanded_taxa['total_conc_mean'].values
+    sigma_conc = expanded_taxa['total_conc_std'].values
     
-        # Avoid division by zero for zero-concentration chains
-        mask = (mu > 0) & (sigma > 0)
+    # Avoid division by zero for zero-concentration entries
+    mask_conc = (mu_conc > 0) & (sigma_conc > 0)
     
-        # Initialize draws array with zeros
-        draw = np.zeros_like(mu)
+    # Make draws array filled with zeros
+    total_conc_draw = np.zeros_like(mu_conc)
     
-        if np.any(mask):
-            # Calculate Log-Normal parameters for non-zero entries
-            var_log = np.log(1 + (sigma[mask]**2 / mu[mask]**2))
-            sigma_log = np.sqrt(var_log)
-            mu_log = np.log(mu[mask]) - (var_log / 2.0)
+    if np.any(mask_conc):
+        # Calculate Log-Normal parameters for non-zero entries: log-normal because concentration cannot be less than 0
+        var_log = np.log(1 + (sigma_conc[mask_conc]**2 / mu_conc[mask_conc]**2))
+        sigma_log = np.sqrt(var_log)
+        mu_log = np.log(mu_conc[mask_conc]) - (var_log / 2.0)
         
-            # Draw from Log-Normal distribution
-            draw[mask] = np.random.lognormal(mean=mu_log, sigma=sigma_log)
-        
-        simulated_taxa[chain] = draw
+        # Draw from Log-Normal distribution
+        total_conc_draw[mask_conc] = np.random.lognormal(mean=mu_log, sigma=sigma_log)
+        total_conc_draw = np.nan_to_num(total_conc_draw, nan=0.0, posinf=0.0, neginf=0.0)
+
+    # Dirichlet draw of the fractional abundances
+    alpha_matrix = expanded_taxa[[f'alpha_{chain}' for chain in alkane_chains]].values
+    
+    # np.random.dirichlet requires 1D arrays, so we use a list comprehension rather than a traditional for loop
+    fractional_draws = np.array([np.random.dirichlet(a) for a in alpha_matrix])
+    
+    # Sanitize any rare numerical underflow that might still produce a NaN
+    fractional_draws = np.nan_to_num(fractional_draws, nan=0.0)
+    
+    # Calculate absolute abundances of each chain length
+    for i, chain in enumerate(alkane_chains):
+        simulated_taxa[chain] = fractional_draws[:, i] * total_conc_draw
         
     pft_cols = [c for c in ['Plant Functional Type 1', 'Plant Functional Type 2'] if c in simulated_taxa.columns]
     
@@ -199,13 +268,14 @@ def waxome(alphas, taxa, alkane_chains, max_species_per_pft=50):
         else:
             biome_taxa = melted_taxa 
             
-        # Draw up to `max_species_per_pft` with replacement for each PFT in this biome
+        # Draw up to the specified max_species_per_pft with replacement for each PFT in this biome
         pft_signatures_list = []
         for pft, group in biome_taxa.groupby('Assigned_PFT'):
+            # The group pool are the simulated taxa
             sampled_group = group.sample(n=max_species_per_pft, replace=True)
-            mean_sig = sampled_group[alkane_chains].mean()
-            mean_sig.name = pft
-            pft_signatures_list.append(mean_sig)
+            sig = sampled_group[alkane_chains].mean()
+            sig.name = pft
+            pft_signatures_list.append(sig)
             
         if pft_signatures_list:
             pft_signatures = pd.DataFrame(pft_signatures_list)
@@ -217,25 +287,25 @@ def waxome(alphas, taxa, alkane_chains, max_species_per_pft=50):
             if pft not in pft_signatures.index:
                 pft_signatures.loc[pft] = 0.0
                 
-        pft_signatures = pft_signatures.sort_index()
+        pft_signatures = pft_signatures.sort_index().fillna(0.0)
         
         # Draw the simulated landscape fractions for this biome
         landscape_fractions = np.random.dirichlet(alphas.loc[biome].values)
         landscape_series = pd.Series(landscape_fractions, index=alphas.columns)
         
-        # Sort landscape to match PFT rows perfectly
+        # Sort landscape to match PFT rows 
         landscape_series = landscape_series.reindex(pft_signatures.index)
         
-        # Calculate absolute wax for this biome (Dot Product)
+        # Calculate absolute wax abundance for this biome
         biome_absolute_wax = landscape_series.dot(pft_signatures)
         
         # Normalize to fractional abundance
-        biome_sum = biome_absolute_wax.sum() + 1e-9
+        biome_sum = biome_absolute_wax.sum() + 1e-9 # adding a tiny constant to prevent divide by zero errors
         biome_final_distributions[biome] = biome_absolute_wax / biome_sum
         
     return pd.DataFrame.from_dict(biome_final_distributions, orient='index')
 
-def spin_up_waxome(alphas, taxa, alkane_chains, max_species_per_pft = 50, seed = 265, n_iterations = 1000):
+def spin_up_waxome(alphas, taxa, alkane_chains, max_species_per_pft = 50, taxa_draws = 50, seed = 265, n_iterations = 1000):
     """
     This function runs the Monte Carlo iterations of Waxome. It requires the outputs from the load_Waxome_parameterization function to run.
 
@@ -273,7 +343,7 @@ def spin_up_waxome(alphas, taxa, alkane_chains, max_species_per_pft = 50, seed =
     print("This might take a hot second...")
     
     for i in trange(n_iterations):
-        iteration_result = waxome(alphas, taxa, alkane_chains, max_species_per_pft)
+        iteration_result = waxome(alphas, taxa, alkane_chains, max_species_per_pft, taxa_draws)
         all_simulations.append(iteration_result)
     
     combined_simulation_results = pd.concat(all_simulations)
@@ -308,7 +378,7 @@ def load_in_sediment_samples(sediment_file, alkane_chains):
     
     return sediments, sediment_abundances
     
-def waxome_analysis(combined_simulation_results, n_NMF_endmembers, sediment_file, study_site = "Unknown", angle = 25):
+def waxome_analysis(combined_simulation_results, n_NMF_endmembers, sediment_file, study_site = "Unknown", angle = 20):
     """
     
 
@@ -357,7 +427,7 @@ def waxome_analysis(combined_simulation_results, n_NMF_endmembers, sediment_file
     
     # extracting NMF endmembers from the sedimentary n-alkane data
     print("Extracting NMF endmembers from sedimentary n-alkane data...")
-    n_endmembers = 2 # Adjusted to match Panel A styling
+    n_endmembers = n_NMF_endmembers
     nmf = NMF(n_components=n_endmembers, init='nndsvda', random_state=42, max_iter=2000)
     W_weights = nmf.fit_transform(sediment_abundances) 
     H_signatures = nmf.components_                     
@@ -386,10 +456,6 @@ def waxome_analysis(combined_simulation_results, n_NMF_endmembers, sediment_file
     k_range = range(1, max_k + 1)
 
     reconstruction_errors = []
-    variance_explained = []
-
-    # Calculating the total Frobenius norm squared of the original data matrix
-    total_sum_sq = np.sum(sediment_abundances.values ** 2)
 
     for k in k_range:
         nmf_eval = NMF(n_components=k, init='nndsvda', random_state=42, max_iter=2000)
@@ -399,10 +465,6 @@ def waxome_analysis(combined_simulation_results, n_NMF_endmembers, sediment_file
         rec_err = nmf_eval.reconstruction_err_
         reconstruction_errors.append(rec_err)
         
-        # Calculate % variance explained: 1 - (SS_res / SS_tot)
-        ss_res = rec_err ** 2
-        nmf_var_exp = (1 - (ss_res / total_sum_sq)) * 100
-        variance_explained.append(nmf_var_exp)
 
     # Create Scree Plot
     fig, ax1 = plt.subplots(figsize=(7.5, 4.5))
@@ -416,13 +478,7 @@ def waxome_analysis(combined_simulation_results, n_NMF_endmembers, sediment_file
     ax1.set_xticks(k_range)
     ax1.grid(True, linestyle='--', alpha=0.5)
 
-    # Y-Axis: Variance Explained (%)
-    ax2 = ax1.twinx()
-    color_var = '#D55E00'
-    ax2.plot(k_range, variance_explained, marker='s', color=color_var, linewidth=2, linestyle='--', markersize=7)
-    ax2.set_ylabel('Approx. Variance Explained (%)', color=color_var, fontweight='bold', fontsize=11)
-    ax2.tick_params(axis='y', labelcolor=color_var)
-    ax2.set_ylim(min(variance_explained) - 5, 102)
+    
 
     plt.title(f'{study_site} NMF Scree Plot: Model Fit vs. Number of Endmembers', fontweight='bold', fontsize=13)
     fig.tight_layout()
@@ -439,8 +495,7 @@ def waxome_analysis(combined_simulation_results, n_NMF_endmembers, sediment_file
     
     sediment_scaled = scaler.transform(sediment_abundances.values)
     sediment_pca = pca.transform(sediment_scaled)
-    
-    sediments = pd.DataFrame()
+        
     sediments['PC1'] = sediment_pca[:, 0]
     sediments['PC2'] = sediment_pca[:, 1]
     
@@ -557,7 +612,10 @@ def waxome_analysis(combined_simulation_results, n_NMF_endmembers, sediment_file
     em_chains_only = df_endmembers[alkane_chains]
     n_em = len(em_chains_only)
 
-    em_colors = ['#C475A6', '#E5D94D', '#0072B2', '#D55E00', '#009E73']
+    
+    cb_palette = ['#F0E442', '#E69F00', '#009E73', '#CC79A7', '#D55E00', '#0072B2']
+    biome_color_map = dict(zip(biome_order, cb_palette))
+
     fig, axes = plt.subplots(nrows=n_em, ncols=1, figsize=(6, 2.2 * n_em), sharex=True, sharey=True)
 
     if n_em == 1:
@@ -566,9 +624,16 @@ def waxome_analysis(combined_simulation_results, n_NMF_endmembers, sediment_file
     y_max_em = max(0.65, em_chains_only.max().max() * 1.15)
     formatted_x_labels = [f"C$_{{{str(c).replace('C', '')}}}$" for c in alkane_chains]
 
-    for i, (ax, em_name) in enumerate(zip(axes, em_chains_only.index)):
+    for ax, em_name in zip(axes, em_chains_only.index):
         abundances = em_chains_only.loc[em_name]
-        color = em_colors[i % len(em_colors)]
+        
+        
+        best_match = df_thresholds[df_thresholds['Endmember'] == em_name].iloc[0]
+        best_biome = best_match['Biome']
+        closest = best_match[f'Prop_<={angle}°']*100
+        
+        
+        color = biome_color_map[best_biome]
         
         ax.bar(
             range(len(alkane_chains)),          
@@ -579,12 +644,6 @@ def waxome_analysis(combined_simulation_results, n_NMF_endmembers, sediment_file
             width=0.75,
             zorder=3
         )
-        
-        # Retrieve closest 
-        best_match = df_thresholds[df_thresholds['Endmember'] == em_name].iloc[0]
-        
-        best_biome = best_match['Biome']
-        closest = best_match[f'Prop_<={angle}°']*100
         
         label_text = f"NMF {em_name.replace('_', ' ')}\n{closest:.1f}% of {best_biome} \n simulations are within \n {angle}° of this endmember"
         ax.text(
